@@ -1,0 +1,1021 @@
+@import "tailwindcss";
+
+/* ===== GLOBAL THEME ===== */
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-terminal: rgba(12, 12, 20, 0.65);
+  --bg-terminal-hover: rgba(20, 20, 35, 0.75);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-glass-active: rgba(139, 92, 246, 0.4);
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-purple: #8b5cf6;
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --glow-purple: 0 0 20px rgba(139, 92, 246, 0.15);
+  --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.15);
+  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+/* ===== DESKTOP ===== */
+.desktop {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.wallpaper {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at 20% 50%,
+      rgba(139, 92, 246, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 20%,
+      rgba(6, 182, 212, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 50% 80%,
+      rgba(16, 185, 129, 0.08) 0%,
+      transparent 50%
+    ),
+    linear-gradient(135deg, #0a0a0f 0%, #0f0a1a 25%, #0a0f1a 50%, #0a0a0f 100%);
+  z-index: 0;
+}
+
+.wallpaper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ===== TERMINAL TILING ===== */
+.terminal-container {
+  position: absolute;
+  inset: 8px;
+  inset-block-end: 48px; /* clear taskbar */
+  z-index: 10;
+  display: grid;
+  gap: 8px;
+  padding: 0;
+}
+
+.terminal-container[data-count="1"] {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+.terminal-container[data-count="2"] {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+.terminal-container[data-count="3"] {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.terminal-container[data-count="3"] > :first-child {
+  grid-row: 1 / -1;
+}
+.terminal-container[data-count="4"] {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+/* ===== GLASS TERMINAL ===== */
+.glass-terminal {
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  background: var(--bg-terminal);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+  position: relative;
+}
+
+.glass-terminal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08),
+    transparent 50%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.glass-terminal.focused {
+  border-color: var(--border-glass-active);
+  box-shadow:
+    var(--glow-purple),
+    inset 0 0 30px rgba(139, 92, 246, 0.03);
+}
+
+/* ===== TERMINAL TITLE BAR ===== */
+.terminal-titlebar {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  user-select: none;
+  gap: 10px;
+}
+
+.titlebar-dots {
+  display: flex;
+  gap: 7px;
+}
+
+.titlebar-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.titlebar-dot:hover {
+  filter: brightness(1.4);
+}
+.titlebar-dot.red {
+  background: #ff5f57;
+}
+.titlebar-dot.yellow {
+  background: #febc2e;
+}
+.titlebar-dot.green {
+  background: #28c840;
+}
+
+.titlebar-title {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+/* ===== TERMINAL BODY ===== */
+.terminal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  font-size: 14px;
+  line-height: 1.7;
+  cursor: text;
+}
+
+.terminal-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.terminal-line .prompt-user {
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
+.terminal-line .prompt-at {
+  color: var(--text-muted);
+}
+
+.terminal-line .prompt-host {
+  color: var(--accent-cyan);
+  font-weight: 500;
+}
+
+.terminal-line .prompt-path {
+  color: var(--accent-purple);
+  font-weight: 500;
+}
+
+.terminal-line .prompt-symbol {
+  color: var(--accent-amber);
+  font-weight: 700;
+}
+
+/* ===== COMMAND INPUT ===== */
+.input-line {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.input-field {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  flex: 1;
+  caret-color: var(--accent-purple);
+}
+
+.cursor-blink {
+  display: inline-block;
+  width: 8px;
+  height: 18px;
+  background: var(--accent-purple);
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+  margin-left: 1px;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ===== OUTPUT STYLES ===== */
+.output-text {
+  color: var(--text-secondary);
+}
+.output-heading {
+  color: var(--accent-cyan);
+  font-weight: 600;
+  font-size: 15px;
+  margin-top: 4px;
+}
+.output-accent {
+  color: var(--accent-purple);
+  font-weight: 500;
+}
+.output-success {
+  color: var(--accent-green);
+}
+.output-warning {
+  color: var(--accent-amber);
+}
+.output-error {
+  color: var(--accent-rose);
+}
+.output-muted {
+  color: var(--text-muted);
+}
+.output-link {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+  text-decoration-color: rgba(6, 182, 212, 0.3);
+  cursor: pointer;
+  transition: text-decoration-color 0.2s;
+}
+.output-link:hover {
+  text-decoration-color: var(--accent-cyan);
+}
+
+/* Neofetch */
+.neofetch-container {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.neofetch-ascii {
+  color: var(--accent-cyan);
+  white-space: pre;
+  font-size: 11px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.neofetch-info {
+  flex: 1;
+}
+.neofetch-info .info-line {
+  line-height: 1.8;
+}
+.neofetch-info .info-label {
+  color: var(--accent-purple);
+  font-weight: 600;
+}
+.neofetch-info .info-value {
+  color: var(--text-secondary);
+}
+.neofetch-colors {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.neofetch-colors span {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* ===== MATRIX RAIN ===== */
+.matrix-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ===== TASKBAR ===== */
+.taskbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 100;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.taskbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.taskbar-center {
+  display: flex;
+  gap: 4px;
+}
+
+.taskbar-indicator {
+  width: 8px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.taskbar-indicator.active {
+  width: 20px;
+  background: var(--accent-purple);
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+}
+
+.taskbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ===== BOOT SCREEN ===== */
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10% 15%;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--accent-green);
+}
+
+.boot-line {
+  opacity: 0;
+  animation: bootFade 0.4s forwards;
+}
+
+@keyframes bootFade {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ===== ADMIN DASHBOARD ===== */
+.admin-container {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  padding: 2rem;
+  position: relative;
+}
+
+.admin-container::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at 20% 50%,
+      rgba(139, 92, 246, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 80% 20%,
+      rgba(6, 182, 212, 0.08) 0%,
+      transparent 50%
+    ),
+    linear-gradient(135deg, #0a0a0f 0%, #0f0a1a 100%);
+  z-index: 0;
+}
+
+.admin-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.admin-glass {
+  backdrop-filter: blur(24px);
+  background: rgba(12, 12, 20, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.admin-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.admin-input:focus {
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-btn:hover {
+  background: rgba(139, 92, 246, 0.35);
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+}
+
+.admin-btn.danger {
+  background: rgba(244, 63, 94, 0.15);
+}
+
+.admin-btn.danger:hover {
+  background: rgba(244, 63, 94, 0.3);
+  border-color: var(--accent-rose);
+}
+
+.admin-btn.success {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.admin-btn.success:hover {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: var(--accent-green);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+}
+
+.admin-table th {
+  color: var(--accent-purple);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.admin-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ===== SKILLS GRID ===== */
+.skills-category {
+  margin-bottom: 8px;
+}
+.skills-category-name {
+  color: var(--accent-amber);
+  font-weight: 600;
+}
+
+/* ===== PROJECT CARD ===== */
+.project-entry {
+  margin: 8px 0;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ===== RESPONSIVE — Comprehensive Device Optimization ===== */
+
+/* --- Safe area + viewport fix for mobile browsers --- */
+html, body, #root {
+  height: 100dvh; /* dynamic viewport height for mobile Safari */
+}
+.desktop {
+  height: 100dvh;
+}
+
+/* --- Tablets & Large Phones (≤1024px) — 1 terminal only --- */
+@media (max-width: 1024px) {
+  .terminal-container {
+    inset: 6px;
+    inset-block-end: 42px; /* clear taskbar */
+    gap: 6px;
+  }
+
+  /* Force single column — only 1 terminal shown */
+  .terminal-container[data-count="1"],
+  .terminal-container[data-count="2"],
+  .terminal-container[data-count="3"],
+  .terminal-container[data-count="4"] {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+  }
+
+  .terminal-container[data-count="3"] > :first-child {
+    grid-row: auto;
+  }
+
+  /* Only show the first terminal, hide rest on small screens */
+  .glass-terminal:nth-child(n+2) {
+    display: none;
+  }
+
+  .glass-terminal {
+    border-radius: 12px;
+  }
+
+  .terminal-body {
+    font-size: 13px;
+    padding: 14px 16px;
+    line-height: 1.65;
+  }
+
+  .input-field {
+    font-size: 13px;
+  }
+
+  .terminal-titlebar {
+    padding: 8px 14px;
+  }
+
+  .titlebar-dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .titlebar-title {
+    font-size: 11px;
+  }
+
+  .neofetch-container {
+    gap: 16px;
+  }
+
+  .neofetch-ascii {
+    font-size: 9px;
+  }
+
+  .taskbar {
+    height: 36px;
+    font-size: 11px;
+    padding: 0 12px;
+  }
+
+  .boot-screen {
+    padding: 8% 8%;
+    font-size: 13px;
+  }
+
+  /* Admin adjustments */
+  .admin-container {
+    padding: 1.25rem;
+  }
+
+  .admin-glass {
+    padding: 1.25rem;
+    border-radius: 12px;
+  }
+
+  .admin-input {
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+
+  .admin-btn {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+}
+
+/* --- Small Tablets & Large Phones (≤768px) --- */
+@media (max-width: 768px) {
+  .terminal-container {
+    inset: 4px;
+    inset-block-end: 38px;
+    gap: 4px;
+  }
+
+  .glass-terminal {
+    border-radius: 10px;
+  }
+
+  .glass-terminal::before {
+    border-radius: 10px;
+  }
+
+  .terminal-body {
+    font-size: 12.5px;
+    padding: 12px 14px;
+    line-height: 1.6;
+  }
+
+  .input-field {
+    font-size: 12.5px;
+  }
+
+  .cursor-blink {
+    width: 7px;
+    height: 16px;
+  }
+
+  .neofetch-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .neofetch-ascii {
+    font-size: 8px;
+    line-height: 1.2;
+  }
+
+  .neofetch-info .info-line {
+    line-height: 1.6;
+    font-size: 12px;
+  }
+
+  .taskbar {
+    height: 34px;
+    font-size: 10px;
+    padding: 0 10px;
+  }
+
+  .taskbar-left {
+    gap: 10px;
+  }
+
+  .output-heading {
+    font-size: 13px;
+  }
+
+  .boot-screen {
+    padding: 6% 6%;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  /* Admin — stack form fields */
+  .admin-content {
+    max-width: 100%;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+}
+
+/* --- Phones (≤480px) — maximized single terminal --- */
+@media (max-width: 480px) {
+  .terminal-container {
+    inset: 2px;
+    inset-block-end: 34px;
+    gap: 0;
+  }
+
+  .glass-terminal {
+    border-radius: 8px;
+  }
+
+  .glass-terminal::before {
+    border-radius: 8px;
+  }
+
+  .terminal-body {
+    font-size: 11.5px;
+    padding: 10px 12px;
+    line-height: 1.55;
+  }
+
+  .input-field {
+    font-size: 11.5px;
+  }
+
+  .terminal-titlebar {
+    padding: 6px 10px;
+    gap: 8px;
+  }
+
+  .titlebar-dots {
+    gap: 5px;
+  }
+
+  .titlebar-dot {
+    width: 9px;
+    height: 9px;
+  }
+
+  .titlebar-title {
+    font-size: 10px;
+  }
+
+  .cursor-blink {
+    width: 6px;
+    height: 14px;
+  }
+
+  .neofetch-ascii {
+    font-size: 6px;
+    line-height: 1.1;
+  }
+
+  .neofetch-info .info-line {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .neofetch-colors span {
+    width: 12px;
+    height: 12px;
+  }
+
+  .taskbar {
+    height: 30px;
+    font-size: 9px;
+    padding: 0 8px;
+  }
+
+  .taskbar-left {
+    gap: 8px;
+  }
+
+  .taskbar-right {
+    gap: 8px;
+  }
+
+  .boot-screen {
+    padding: 10% 5%;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .output-heading {
+    font-size: 12px;
+  }
+
+  /* Admin on phone */
+  .admin-container {
+    padding: 0.75rem;
+  }
+
+  .admin-glass {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+
+  .admin-input {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .admin-btn {
+    font-size: 11px;
+    padding: 7px 12px;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+}
+
+/* --- Small Laptops (1025px – 1366px) — tiling works but tighter --- */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  .terminal-container {
+    inset: 6px;
+    inset-block-end: 42px;
+    gap: 6px;
+  }
+
+  .terminal-body {
+    font-size: 13px;
+    padding: 14px 16px;
+  }
+
+  .boot-screen {
+    padding: 8% 12%;
+    font-size: 13px;
+  }
+
+  .taskbar {
+    height: 38px;
+    font-size: 11px;
+  }
+}
+
+/* --- Large Desktop (≥1600px) — more breathing room --- */
+@media (min-width: 1600px) {
+  .terminal-container {
+    inset: 12px;
+    inset-block-end: 48px;
+    gap: 10px;
+  }
+
+  .terminal-body {
+    font-size: 15px;
+    padding: 20px 24px;
+    line-height: 1.75;
+  }
+
+  .input-field {
+    font-size: 15px;
+  }
+
+  .glass-terminal {
+    border-radius: 16px;
+  }
+
+  .taskbar {
+    height: 44px;
+    font-size: 13px;
+    padding: 0 20px;
+  }
+
+  .boot-screen {
+    font-size: 15px;
+    padding: 10% 18%;
+  }
+}
+
+/* --- Ultra-wide (≥2000px) --- */
+@media (min-width: 2000px) {
+  .terminal-container {
+    inset: 16px;
+    inset-block-end: 52px;
+    gap: 12px;
+  }
+
+  .terminal-body {
+    font-size: 16px;
+    padding: 24px 28px;
+  }
+
+  .glass-terminal {
+    border-radius: 18px;
+  }
+}
+
+/* --- Touch device adjustments --- */
+@media (hover: none) and (pointer: coarse) {
+  .titlebar-dot {
+    width: 13px;
+    height: 13px;
+  }
+
+  .titlebar-dots {
+    gap: 8px;
+  }
+
+  .admin-btn {
+    padding: 12px 18px;
+    min-height: 44px; /* iOS tap target */
+  }
+
+  .admin-input {
+    min-height: 44px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+/* --- Landscape phone --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .terminal-titlebar {
+    padding: 4px 12px;
+  }
+
+  .titlebar-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .terminal-body {
+    padding: 8px 12px;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .taskbar {
+    height: 28px;
+    font-size: 9px;
+  }
+
+  .boot-screen {
+    padding: 3% 5%;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+}
+
