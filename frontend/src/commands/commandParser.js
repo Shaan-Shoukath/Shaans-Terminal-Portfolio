@@ -1,11 +1,12 @@
 import axios from 'axios'
 import fallbackProjects from './fallbackProjects'
+import config from '../config'
 
 let cachedProjects = null
 
 async function fetchProjects() {
   try {
-    const res = await axios.get('/api/projects')
+    const res = await axios.get(`${config.apiUrl}/api/projects`)
     cachedProjects = res.data
     return cachedProjects
   } catch {

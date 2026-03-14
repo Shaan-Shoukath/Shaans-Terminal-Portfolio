@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 import { motion } from 'framer-motion'
+import config from '../config'
 
 export default function AdminLogin({ onLogin }) {
   const [username, setUsername] = useState('')
@@ -13,7 +14,7 @@ export default function AdminLogin({ onLogin }) {
     setLoading(true)
     setError('')
     try {
-      const res = await axios.post('/api/admin/login', { username, password })
+      const res = await axios.post(`${config.apiUrl}/api/admin/login`, { username, password })
       localStorage.setItem('adminToken', res.data.token)
       onLogin(res.data.token)
     } catch (err) {

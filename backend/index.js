@@ -10,9 +10,25 @@ dotenv.config()
 
 const app = express()
 const PORT = process.env.PORT || 5000
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser requests and local development when whitelist is unset.
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+    return callback(new Error('Not allowed by CORS'))
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}
 
 // Middleware
-app.use(cors())
+app.use(cors(corsOptions))
 app.use(express.json())
 
 // Routes

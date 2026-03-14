@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { motion, AnimatePresence } from 'framer-motion'
+import config from '../config'
 
 export default function AdminDashboard({ token, onLogout }) {
   const [projects, setProjects] = useState([])
@@ -17,6 +18,7 @@ export default function AdminDashboard({ token, onLogout }) {
   const [currentAscii, setCurrentAscii] = useState('')
 
   const api = axios.create({
+    baseURL: config.apiUrl,
     headers: { Authorization: `Bearer ${token}` },
   })
 
@@ -31,7 +33,7 @@ export default function AdminDashboard({ token, onLogout }) {
 
   const fetchCurrentAscii = async () => {
     try {
-      const res = await axios.get('/api/profile/ascii')
+      const res = await api.get('/api/profile/ascii')
       setCurrentAscii(res.data.asciiArt || '')
     } catch (err) {
       // Ignore — no profile yet
