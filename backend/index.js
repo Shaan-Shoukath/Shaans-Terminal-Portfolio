@@ -4,6 +4,7 @@ import mongoose from 'mongoose'
 import dotenv from 'dotenv'
 import projectRoutes from './routes/projects.js'
 import adminRoutes from './routes/admin.js'
+import profileRoutes from './routes/profile.js'
 
 dotenv.config()
 
@@ -17,6 +18,7 @@ app.use(express.json())
 // Routes
 app.use('/api/projects', projectRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/profile', profileRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

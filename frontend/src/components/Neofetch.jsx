@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
 
-// ASCII portrait using only safe characters (no backslashes or quotes that JS mangles)
-const asciiLines = [
+// Default fallback ASCII if API has no profile or is offline
+const defaultAscii = [
   '       .:::::::::::.       ',
   "     .'             '.     ",
   '    :   .--"""""--.   :    ',
@@ -18,9 +19,7 @@ const asciiLines = [
   '      |____|_|____|        ',
   "      /    | |    |        ",
   "     '-----' '-----'      ",
-]
-
-const ascii = asciiLines.join('\n')
+].join('\n')
 
 const colors = [
   '#ff5f57', '#febc2e', '#28c840', '#06b6d4',
@@ -28,6 +27,21 @@ const colors = [
 ]
 
 export default function Neofetch() {
+  const [ascii, setAscii] = useState(defaultAscii)
+
+  useEffect(() => {
+    // Try to fetch custom ASCII from backend
+    axios.get('/api/profile/ascii')
+      .then(res => {
+        if (res.data.asciiArt && res.data.asciiArt.trim().length > 0) {
+          setAscii(res.data.asciiArt)
+        }
+      })
+      .catch(() => {
+        // API offline — use default
+      })
+  }, [])
+
   const info = [
     { label: 'OS', value: 'ShaanOS 2.0 (Hyprland)' },
     { label: 'Host', value: 'Terminal Portfolio v2.0' },
