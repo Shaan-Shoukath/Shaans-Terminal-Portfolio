@@ -318,18 +318,17 @@ async function sudoCommand(args) {
     ]
   }
 
-  // ── Hardcoded commands ──
+  // Fetch content from backend
+  const content = cachedContent || await fetchContent()
 
   if (full === 'hire shaan') {
+    const msg = content.hireMessage || 'Shaan has been hired! Starting date: Immediately. Salary: Yes, please 🚀'
     return [
       blank(),
       line('  ╔═══════════════════════════════════════════╗', 'output-success'),
-      line('  ║                                           ║', 'output-success'),
       line('  ║   ✅ DECISION: EXCELLENT                  ║', 'output-success'),
       line('  ║                                           ║', 'output-success'),
-      line('  ║   Shaan has been hired!                   ║', 'output-success'),
-      line('  ║   Starting date: Immediately              ║', 'output-success'),
-      line('  ║   Salary: Yes, please 🚀                  ║', 'output-success'),
+      line(`  ║   ${msg}`, 'output-success'),
       line('  ║                                           ║', 'output-success'),
       line('  ╚═══════════════════════════════════════════╝', 'output-success'),
       blank(),
@@ -337,19 +336,16 @@ async function sudoCommand(args) {
   }
 
   if (full === 'music' || full === 'favourite music' || full === 'play') {
+    const musicUrl = content.musicUrl || 'https://www.youtube.com/watch?v=jfKfPfyJRdk'
     return [
       blank(),
       line('  🎵 Opening the vibes...', 'output-success'),
       blank(),
-      { type: 'action', action: 'openUrl', url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk' },
-      line('  ♪ lofi hip hop radio — beats to relax/study to', 'output-muted'),
+      { type: 'action', action: 'openUrl', url: musicUrl },
+      line('  ♪ Now playing your favourite beats...', 'output-muted'),
       blank(),
     ]
   }
-
-  // ── Backend-driven commands ──
-
-  const content = cachedContent || await fetchContent()
 
   if (full === 'meme' || full === 'favourite meme') {
     const output = [blank()]

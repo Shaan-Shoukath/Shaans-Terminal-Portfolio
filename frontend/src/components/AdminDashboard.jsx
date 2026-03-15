@@ -609,6 +609,20 @@ export default function AdminDashboard({ token, onLogout }) {
                 </div>
               </div>
 
+              {/* Music URL */}
+              <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 16, marginBottom: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
+                <Label>🎵 Music URL (sudo music)</Label>
+                <input className="admin-input" value={content.musicUrl || ''} onChange={e => updateContent('musicUrl', e.target.value)} placeholder="https://youtube.com/watch?v=jfKfPfyJRdk" />
+                <p style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 4 }}>YouTube/Spotify link opened when user types sudo music</p>
+              </div>
+
+              {/* Hire Message */}
+              <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 16, marginBottom: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
+                <Label>✅ Hire Message (sudo hire shaan)</Label>
+                <input className="admin-input" value={content.hireMessage || ''} onChange={e => updateContent('hireMessage', e.target.value)} placeholder="Shaan has been hired! Starting date: Immediately." />
+                <p style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 4 }}>Message shown in the success box when user types sudo hire shaan</p>
+              </div>
+
               {/* Rickroll URL */}
               <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 16, marginBottom: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
                 <Label>🎵 Rickroll URL (sudo rm -rf /)</Label>

@@ -58,6 +58,12 @@ const siteContentSchema = new mongoose.Schema({
   // Sudo meme — audio URL (MP3) played when user types sudo meme
   memeAudioUrl: { type: String, default: '' },
 
+  // Sudo music — YouTube/Spotify URL opened
+  musicUrl: { type: String, default: 'https://www.youtube.com/watch?v=jfKfPfyJRdk' },
+
+  // Sudo hire shaan — custom message
+  hireMessage: { type: String, default: 'Shaan has been hired! Starting date: Immediately. Salary: Yes, please 🚀' },
+
   // Sudo rm -rf / — YouTube URL opened
   rickrollUrl: { type: String, default: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
 
