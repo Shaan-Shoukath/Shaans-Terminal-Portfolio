@@ -16,10 +16,15 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .map((origin) => origin.trim())
   .filter(Boolean)
 
+// Always allow localhost for development
+if (!allowedOrigins.includes('http://localhost:5173')) {
+  allowedOrigins.push('http://localhost:5173')
+}
+
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow non-browser requests and local development when whitelist is unset.
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+    // Allow non-browser requests (like curl / Postman)
+    if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true)
     }
     return callback(new Error('Not allowed by CORS'))
