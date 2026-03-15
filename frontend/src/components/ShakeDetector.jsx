@@ -2,8 +2,10 @@ import { useEffect, useRef } from 'react'
 import axios from 'axios'
 import config from '../config'
 
-const SHAKE_THRESHOLD = 30
-const COOLDOWN_MS = 10000 // 10 second cooldown between triggers
+const SHAKE_THRESHOLD = 25
+const SHAKE_COUNT_NEEDED = 3    // Must shake 3+ times
+const SHAKE_WINDOW_MS = 2000    // within 2 seconds
+const COOLDOWN_MS = 10000       // 10 second cooldown after trigger
 
 let cachedShakeAudioUrl = null
 let audioFetched = false
@@ -11,6 +13,7 @@ let audioFetched = false
 export default function ShakeDetector() {
   const lastTrigger = useRef(0)
   const lastAccel = useRef({ x: 0, y: 0, z: 0 })
+  const shakeTimestamps = useRef([])
   const audioRef = useRef(null)
 
   // Fetch shake audio URL from backend
@@ -45,8 +48,22 @@ export default function ShakeDetector() {
 
       if (totalAccel > SHAKE_THRESHOLD) {
         const now = Date.now()
-        if (now - lastTrigger.current > COOLDOWN_MS) {
+
+        // Cooldown check
+        if (now - lastTrigger.current < COOLDOWN_MS) return
+
+        // Add this shake to the rolling window
+        shakeTimestamps.current.push(now)
+
+        // Remove shakes older than the window
+        shakeTimestamps.current = shakeTimestamps.current.filter(
+          t => now - t < SHAKE_WINDOW_MS
+        )
+
+        // Need N shakes within the window to trigger
+        if (shakeTimestamps.current.length >= SHAKE_COUNT_NEEDED) {
           lastTrigger.current = now
+          shakeTimestamps.current = [] // reset
 
           if (cachedShakeAudioUrl) {
             // Play the admin-configured MP3
@@ -60,8 +77,8 @@ export default function ShakeDetector() {
               // Audio playback failed silently
             }
           } else {
-            // Fallback: rickroll if no audio configured
-            window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank')
+            // Fallback: rickroll — use location.href to avoid popup blocker
+            window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
           }
         }
       }

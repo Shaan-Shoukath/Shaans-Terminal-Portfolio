@@ -745,16 +745,20 @@ body,
   .neofetch-container {
     flex-direction: column;
     gap: 12px;
+    max-height: none;
+    overflow: visible;
   }
 
   .neofetch-ascii {
     font-size: 8px;
     line-height: 1.2;
+    max-width: 100%;
   }
 
   .neofetch-info .info-line {
     line-height: 1.6;
     font-size: 12px;
+    word-break: break-word;
   }
 
   .taskbar {
@@ -841,11 +845,13 @@ body,
   .neofetch-ascii {
     font-size: 6px;
     line-height: 1.1;
+    max-width: 100%;
   }
 
   .neofetch-info .info-line {
     font-size: 11px;
     line-height: 1.5;
+    word-break: break-word;
   }
 
   .neofetch-colors span {

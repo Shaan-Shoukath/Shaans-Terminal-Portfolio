@@ -4,7 +4,8 @@ let nextId = 1
 
 function getMaxTerminals() {
   const w = window.innerWidth
-  if (w <= 1024) return 1   // Phone + Tablet → 1 terminal only
+  if (w <= 480) return 1    // Phones → 1 terminal only
+  if (w <= 1024) return 2   // Tablets → up to 2 side-by-side
   return 4                  // Desktop / Laptop → up to 4
 }
 

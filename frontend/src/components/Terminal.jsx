@@ -112,6 +112,7 @@ export default function Terminal({ terminal }) {
       if (item._actionId && !executedActions.has(item._actionId)) {
         executedActions.add(item._actionId)
         if (item.action === 'openUrl') {
+          // window.open works here because it's triggered by user input (Enter key)
           setTimeout(() => window.open(item.url, '_blank'), 100)
         }
       }
