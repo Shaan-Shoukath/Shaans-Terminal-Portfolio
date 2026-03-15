@@ -3,24 +3,27 @@ import axios from 'axios'
 import config from '../config'
 
 // Default fallback ASCII if API has no profile or is offline
-const defaultAscii = [
-  '       .:::::::::::.       ',
-  "     .'             '.     ",
-  '    :   .--"""""""--.   :    ',
-  '    :  /  o     o  |  :    ',
-  '    :  |    ___    |  :    ',
-  '    :  |   |___|   |  :    ',
-  "    ':  '-..___..-'  :'    ",
-  "     ':     ___     :'     ",
-  '   ___|.   / S |   .|___  ',
-  '  /   | `-.___.-` |   |   ',
-  ' /    |    | |    |    |   ',
-  '/_____|____|_|____|_____|  ',
-  '      |    | |    |        ',
-  '      |____|_|____|        ',
-  "      /    | |    |        ",
-  "     '-----' '-----'      ",
-].join('\n')
+const defaultAscii = String.raw`
+                   -
+                  .o+
+                 .ooo+
+                .ooooo+
+               .oooo++++
+              .oooo++oooo.
+             .oooo++    ++.
+            .oo++          +.
+           .o+     :+oo+.   +.
+          .o:    .ooooooo.   o.
+         +:    +oooooooooo+  .o
+        +:   .ooooo+   +ooo. o+
+       +:   .ooo+         +. o+
+      ++   .ooo:            .o+
+     ++   .oo.             .oo.
+    ++    ..              .oo.
+   ++                   .oo.
+  ++.                 .ooo.
+   +oooooooooooooooooooo+
+`.trim()
 
 const colors = [
   '#ff5f57', '#febc2e', '#28c840', '#06b6d4',

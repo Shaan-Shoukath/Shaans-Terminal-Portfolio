@@ -1,37 +1,27 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const bootArt = [
-  ' _____ __               __              ',
-  '/   _//  |             /  |             ',
-  '\\  \\ |  |__   ______ |  |__   ______  ',
-  ' \\  \\| |  \\ /  __  \\| |  \\ /  __  \\ ',
-  ' _\\  \\| |  || |  |  || |  || |  \\  |',
-  '/  \\__| |  || |__|  || |  || |  |  |  ',
-  '\\______/|__/ \\______||__/  |_|  |__|  ',
-  '  ____                                  ',
-  ' / ___| _ __   __ _  ___ ___  ___      ',
-  ' \\___ \\| \'_ \\ / _` |/ __/ _ \\/ __|  ',
-  '  ___) | |_) | (_| | (_|  __/\\__ \\    ',
-  ' |____/| .__/ \\__,_|\\___\\___||___/   ',
-  '       |_|                              ',
-]
+// String.raw preserves backslashes exactly as written — no escaping issues
+const bootArt = String.raw`   _____ __  __ ___  ___  _  __ _____
+  / ___// / / //   |/   |/ |/ // ___/
+  \__ \/ /_/ // /| / /| /  |/ / \__ \ 
+ ___/ / __  // ___ / ___|/ /| / ___/ / 
+/____/_/ /_//_/  |_/_/  |_/_/ /____/  `.split('\n')
 
 const bootLines = [
   { text: '', delay: 200 },
-  ...bootArt.map(line => ({ text: '  ' + line, delay: 45, className: 'output-accent' })),
-  { text: '', delay: 150 },
+  ...bootArt.map(line => ({ text: '  ' + line, delay: 80, className: 'output-accent' })),
+  { text: '', delay: 200 },
   { text: '  Booting Arch Linux...', delay: 400 },
   { text: '', delay: 100 },
   { text: '  [  OK  ] Loading kernel modules...', delay: 300 },
   { text: '  [  OK  ] Initializing terminal subsystem...', delay: 250 },
   { text: '  [  OK  ] Mounting portfolio filesystem...', delay: 350 },
-  { text: '  [  OK  ] Starting window compositor...', delay: 200 },
-  { text: '  [  OK  ] Loading glassmorphism shaders...', delay: 300 },
+  { text: '  [  OK  ] Starting Hyprland compositor...', delay: 200 },
   { text: '  [  OK  ] Connecting to project database...', delay: 250 },
   { text: '  [  OK  ] Enabling terminal renderer...', delay: 200 },
   { text: '', delay: 100 },
-  { text: '  * System ready. Welcome to Arch Linux.', delay: 400, className: 'output-success' },
+  { text: '  * System ready. Welcome, visitor.', delay: 400, className: 'output-success' },
   { text: '', delay: 200 },
 ]
 
@@ -80,7 +70,7 @@ export default function BootScreen({ onComplete }) {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.15 }}
-              style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}
+              style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', whiteSpace: 'pre' }}
             >
               {line.text}
             </motion.div>

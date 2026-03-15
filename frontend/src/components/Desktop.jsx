@@ -23,7 +23,7 @@ export default function Desktop() {
     if (firstTerminal) {
       // Show welcome + neofetch
       store.addOutput(firstTerminal.id, [
-        { type: 'text', text: '  Welcome to ShaanOS! 🚀', className: 'output-success' },
+        { type: 'text', text: '  Welcome to Arch Linux! 🚀', className: 'output-success' },
         { type: 'text', text: '', className: 'output-text' },
         { type: 'neofetch' },
         { type: 'text', text: '', className: 'output-text' },
@@ -79,10 +79,7 @@ export default function Desktop() {
 
   if (booting) {
     return (
-      <>
-        <MatrixRain />
-        <BootScreen onComplete={handleBootComplete} />
-      </>
+      <BootScreen onComplete={handleBootComplete} />
     )
   }
 

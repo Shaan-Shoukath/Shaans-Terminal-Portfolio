@@ -463,10 +463,13 @@ body,
 
 /* ===== ADMIN DASHBOARD ===== */
 .admin-container {
-  min-height: 100vh;
+  position: fixed;
+  inset: 0;
   background: var(--bg-primary);
   padding: 2rem;
-  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 10;
 }
 
 .admin-container::before {
