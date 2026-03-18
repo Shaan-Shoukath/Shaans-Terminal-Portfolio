@@ -221,6 +221,8 @@ body,
   font-size: 14px;
   line-height: 1.7;
   cursor: text;
+  container-type: inline-size;
+  container-name: terminal;
 }
 
 .terminal-line {
@@ -326,12 +328,20 @@ body,
   opacity: 0.8;
 }
 
+/* Border lines — clip gracefully on small screens */
+.output-border {
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: clip;
+  display: block;
+  max-width: 100%;
+}
+
 /* Neofetch */
 .neofetch-container {
   display: flex;
   gap: 24px;
   align-items: flex-start;
-  max-height: 400px;
   overflow: hidden;
   background: transparent;
 }
@@ -341,12 +351,14 @@ body,
   white-space: pre;
   font-size: 11px;
   line-height: 1.3;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
   background: transparent;
   margin: 0;
   padding: 0;
   border: none;
   max-width: 45%;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -356,6 +368,8 @@ body,
 }
 .neofetch-info .info-line {
   line-height: 1.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .neofetch-info .info-label {
   color: var(--accent-purple);
@@ -374,6 +388,39 @@ body,
   height: 16px;
   border-radius: 3px;
   display: inline-block;
+}
+
+/* Neofetch — adapt to terminal container width */
+@container terminal (max-width: 500px) {
+  .neofetch-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .neofetch-ascii {
+    font-size: 7px;
+    line-height: 1.15;
+    max-width: 100%;
+  }
+  .neofetch-info .info-line {
+    font-size: 12px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .neofetch-colors span {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+@container terminal (max-width: 350px) {
+  .neofetch-ascii {
+    font-size: 5px;
+    line-height: 1.05;
+  }
+  .neofetch-info .info-line {
+    font-size: 11px;
+    line-height: 1.4;
+  }
 }
 
 /* ===== MATRIX RAIN ===== */

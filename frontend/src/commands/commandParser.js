@@ -56,12 +56,59 @@ async function fetchContent() {
 
 // ── Helpers ─────────────────────────────────────────────────────
 
+const BOX_W = 48 // inner character count between corners
+
 function line(text, className = 'output-text') {
   return { type: 'text', text, className }
 }
 
 function blank() {
   return line('')
+}
+
+// ── Box drawing generators (guarantees matched top/bottom) ──────
+
+function boxTop(title) {
+  const label = `─── ${title} `
+  return { type: 'text', text: `  ┌${label}${'─'.repeat(BOX_W - label.length)}┐`, className: 'output-accent output-border' }
+}
+function boxBottom() {
+  return { type: 'text', text: `  └${'─'.repeat(BOX_W)}┘`, className: 'output-accent output-border' }
+}
+function dblBoxTop() {
+  return { type: 'text', text: `  ╔${'═'.repeat(BOX_W)}╗`, className: 'output-accent output-border' }
+}
+function dblBoxBottom() {
+  return { type: 'text', text: `  ╚${'═'.repeat(BOX_W)}╝`, className: 'output-accent output-border' }
+}
+function dblBoxRow(content, pad = ' ') {
+  const inner = content + pad.repeat(Math.max(0, BOX_W - content.length))
+  return { type: 'text', text: `  ║${inner}║`, className: 'output-accent output-border' }
+}
+function divider(title, cls = 'output-muted output-border') {
+  const label = `─── ${title} `
+  return { type: 'text', text: `  ${label}${'─'.repeat(BOX_W - label.length + 2)}`, className: cls }
+}
+function roundBoxTop(title) {
+  const label = `─── ${title} `
+  return { type: 'text', text: `  ╭${label}${'─'.repeat(BOX_W - label.length)}╮`, className: 'output-muted output-border' }
+}
+function roundBoxBottom() {
+  return { type: 'text', text: `  ╰${'─'.repeat(BOX_W)}╯`, className: 'output-muted output-border' }
+}
+function roundBoxRow(content) {
+  const inner = content + ' '.repeat(Math.max(0, BOX_W - content.length))
+  return line(`  │${inner}│`, 'output-muted')
+}
+function dblBoxTopSuccess() {
+  return { type: 'text', text: `  ╔${'═'.repeat(BOX_W)}╗`, className: 'output-success output-border' }
+}
+function dblBoxBottomSuccess() {
+  return { type: 'text', text: `  ╚${'═'.repeat(BOX_W)}╝`, className: 'output-success output-border' }
+}
+function dblBoxRowSuccess(content, pad = ' ') {
+  const inner = content + pad.repeat(Math.max(0, BOX_W - content.length))
+  return { type: 'text', text: `  ║${inner}║`, className: 'output-success output-border' }
 }
 
 // ── Command dispatcher ─────────────────────────────────────────
@@ -118,9 +165,9 @@ export async function executeCommand(cmd, store, termId) {
 function helpCommand() {
   return [
     blank(),
-    line('  ╔══════════════════════════════════════════╗', 'output-accent'),
-    line('  ║          AVAILABLE COMMANDS               ║', 'output-accent'),
-    line('  ╚══════════════════════════════════════════╝', 'output-accent'),
+    dblBoxTop(),
+    dblBoxRow('          AVAILABLE COMMANDS'),
+    dblBoxBottom(),
     blank(),
     line('  about       → Who is Shaan?', 'output-text'),
     line('  skills      → Tech stack & expertise', 'output-text'),
@@ -136,7 +183,7 @@ function helpCommand() {
     line('  clear       → Clear terminal', 'output-text'),
     line('  sudo <cmd>  → Try your luck...', 'output-muted'),
     blank(),
-    line('  ─── Keybindings ───', 'output-muted'),
+    divider('Keybindings'),
     line('  Alt+Enter → New terminal    Alt+Q → Close', 'output-muted'),
     line('  Alt+W/A/S/D → Navigate terminals', 'output-muted'),
     blank(),
@@ -148,7 +195,7 @@ async function aboutCommand() {
   const a = content.about
   return [
     blank(),
-    line('  ┌─── About Me ───────────────────────────┐', 'output-accent'),
+    boxTop('About Me'),
     blank(),
     line(`    👋 Hey, I'm ${a.name}`, 'output-heading'),
     blank(),
@@ -158,7 +205,7 @@ async function aboutCommand() {
     line(`    📍 Location: ${a.location}`, 'output-text'),
     line(`    🔭 Focus: ${a.focus}`, 'output-text'),
     blank(),
-    line('  └─────────────────────────────────────────┘', 'output-accent'),
+    boxBottom(),
     blank(),
   ]
 }
@@ -167,7 +214,7 @@ async function skillsCommand() {
   const content = cachedContent || await fetchContent()
   const lines = [
     blank(),
-    line('  ┌─── Skills & Technologies ─────────────────┐', 'output-accent'),
+    boxTop('Skills & Technologies'),
     blank(),
   ]
 
@@ -177,7 +224,7 @@ async function skillsCommand() {
     lines.push(blank())
   })
 
-  lines.push(line('  └────────────────────────────────────────────┘', 'output-accent'))
+  lines.push(boxBottom())
   lines.push(blank())
   return lines
 }
@@ -186,7 +233,7 @@ async function projectsCommand() {
   const projects = await fetchProjects()
   const lines = [
     blank(),
-    line('  ┌─── Projects ─────────────────────────────┐', 'output-accent'),
+    boxTop('Projects'),
     blank(),
   ]
 
@@ -200,12 +247,12 @@ async function projectsCommand() {
     lines.push(blank())
   })
 
-  lines.push(line('  └────────────────────────────────────────┘', 'output-accent'))
+  lines.push(boxBottom())
   lines.push(blank())
-  lines.push(line('  ╭─── How to explore ───────────────────────╮', 'output-muted'))
-  lines.push(line(`  │  Type  open <number>  to view full details  │`, 'output-muted'))
-  lines.push(line(`  │  Example:  open 1                          │`, 'output-muted'))
-  lines.push(line('  ╰────────────────────────────────────────────╯', 'output-muted'))
+  lines.push(roundBoxTop('How to explore'))
+  lines.push(roundBoxRow('  Type  open <number>  to view details'))
+  lines.push(roundBoxRow('  Example:  open 1'))
+  lines.push(roundBoxBottom())
   lines.push(blank())
 
   return lines
@@ -221,9 +268,11 @@ async function openCommand(args) {
     return [line(`  Project #${args[0]} not found. Run 'projects' to see list.`, 'output-error')]
   }
   const p = projects[idx]
+  const label = `══ ${p.title} `
+  const pad = Math.max(0, BOX_W - label.length)
   const lines = [
     blank(),
-    line(`  ╔══ ${p.title} ══╗`, 'output-accent'),
+    { type: 'text', text: `  ╔${label}${'═'.repeat(pad)}╗`, className: 'output-accent output-border' },
     blank(),
     line(`    ${p.description}`, 'output-text'),
     blank(),
@@ -235,7 +284,7 @@ async function openCommand(args) {
   if (p.deployment) lines.push({ type: 'link', text: `    🌐 Live: ${p.deployment}`, url: p.deployment, className: 'output-link' })
   if (p.linkedin) lines.push({ type: 'link', text: `    💼 LinkedIn: ${p.linkedin}`, url: p.linkedin, className: 'output-link' })
   lines.push(blank())
-  lines.push(line(`  ╚${'═'.repeat(p.title.length + 6)}╝`, 'output-accent'))
+  lines.push({ type: 'text', text: `  ╚${'═'.repeat(label.length + pad)}╝`, className: 'output-accent output-border' })
   lines.push(blank())
   return lines
 }
@@ -244,14 +293,14 @@ async function resumeCommand() {
   const content = cachedContent || await fetchContent()
   return [
     blank(),
-    line('  ┌─── Resume ──────────────────────────────┐', 'output-accent'),
+    boxTop('Resume'),
     blank(),
     line('    📄 Resume / CV', 'output-heading'),
     blank(),
     { type: 'link', text: '    → Download PDF Resume', url: content.resumeUrl, className: 'output-link' },
     { type: 'link', text: '    → View on LinkedIn', url: content.resumeLinkedIn, className: 'output-link' },
     blank(),
-    line('  └──────────────────────────────────────────┘', 'output-accent'),
+    boxBottom(),
     blank(),
   ]
 }
@@ -261,7 +310,7 @@ async function contactCommand() {
   const c = content.contact
   return [
     blank(),
-    line('  ┌─── Contact ─────────────────────────────┐', 'output-accent'),
+    boxTop('Contact'),
     blank(),
     line('    📬 Let\'s Connect!', 'output-heading'),
     blank(),
@@ -269,7 +318,7 @@ async function contactCommand() {
     { type: 'link', text: `    🐙 GitHub: ${c.github}`, url: c.github, className: 'output-link' },
     { type: 'link', text: `    💼 LinkedIn: ${c.linkedin}`, url: c.linkedin, className: 'output-link' },
     blank(),
-    line('  └──────────────────────────────────────────┘', 'output-accent'),
+    boxBottom(),
     blank(),
   ]
 }
@@ -325,12 +374,12 @@ async function sudoCommand(args) {
     const msg = content.hireMessage || 'Shaan has been hired! Starting date: Immediately. Salary: Yes, please 🚀'
     return [
       blank(),
-      line('  ╔═══════════════════════════════════════════╗', 'output-success'),
-      line('  ║   ✅ DECISION: EXCELLENT                  ║', 'output-success'),
-      line('  ║                                           ║', 'output-success'),
+      dblBoxTopSuccess(),
+      dblBoxRowSuccess('   ✅ DECISION: EXCELLENT'),
+      dblBoxRowSuccess(''),
       line(`  ║   ${msg}`, 'output-success'),
-      line('  ║                                           ║', 'output-success'),
-      line('  ╚═══════════════════════════════════════════╝', 'output-success'),
+      dblBoxRowSuccess(''),
+      dblBoxBottomSuccess(),
       blank(),
     ]
   }
@@ -363,14 +412,14 @@ async function sudoCommand(args) {
     const hobbies = content.hobbies || []
     const output = [
       blank(),
-      line('  ┌─── Hobbies & Interests ────────────────┐', 'output-accent'),
+      boxTop('Hobbies & Interests'),
       blank(),
     ]
     hobbies.forEach(h => {
       output.push(line(`    ${h}`, 'output-text'))
     })
     output.push(blank())
-    output.push(line('  └──────────────────────────────────────────┘', 'output-accent'))
+    output.push(boxBottom())
     output.push(blank())
     return output
   }
