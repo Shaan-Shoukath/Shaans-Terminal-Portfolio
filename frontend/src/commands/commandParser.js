@@ -56,7 +56,7 @@ async function fetchContent() {
 
 // ── Helpers ─────────────────────────────────────────────────────
 
-const BOX_W = 48 // inner character count between corners
+const BOX_W = 42 // inner character count between corners
 
 function line(text, className = 'output-text') {
   return { type: 'text', text, className }
@@ -64,6 +64,20 @@ function line(text, className = 'output-text') {
 
 function blank() {
   return line('')
+}
+
+// Emoji-aware display width: emojis render as 2 chars in monospace
+const emojiRx = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu
+function displayWidth(str) {
+  let w = 0
+  for (const ch of str) {
+    w += emojiRx.test(ch) ? 2 : 1
+    emojiRx.lastIndex = 0 // reset regex state
+  }
+  return w
+}
+function pad(content, width = BOX_W, ch = ' ') {
+  return content + ch.repeat(Math.max(0, width - displayWidth(content)))
 }
 
 // ── Box drawing generators (guarantees matched top/bottom) ──────
@@ -81,13 +95,18 @@ function dblBoxTop() {
 function dblBoxBottom() {
   return { type: 'text', text: `  ╚${'═'.repeat(BOX_W)}╝`, className: 'output-accent output-border' }
 }
-function dblBoxRow(content, pad = ' ') {
-  const inner = content + pad.repeat(Math.max(0, BOX_W - content.length))
-  return { type: 'text', text: `  ║${inner}║`, className: 'output-accent output-border' }
+function dblBoxRow(content, p = ' ') {
+  return { type: 'text', text: `  ║${pad(content)}║`, className: 'output-accent output-border' }
 }
 function divider(title, cls = 'output-muted output-border') {
   const label = `─── ${title} `
   return { type: 'text', text: `  ${label}${'─'.repeat(BOX_W - label.length + 2)}`, className: cls }
+}
+function boxRow(content, cls = 'output-text') {
+  return line(`  │${pad(content)}│`, `${cls} output-border`)
+}
+function boxLink(content, url) {
+  return { type: 'link', text: `  │${pad(content)}│`, url, className: 'output-link output-border' }
 }
 function roundBoxTop(title) {
   const label = `─── ${title} `
@@ -97,8 +116,7 @@ function roundBoxBottom() {
   return { type: 'text', text: `  ╰${'─'.repeat(BOX_W)}╯`, className: 'output-muted output-border' }
 }
 function roundBoxRow(content) {
-  const inner = content + ' '.repeat(Math.max(0, BOX_W - content.length))
-  return line(`  │${inner}│`, 'output-muted')
+  return line(`  │${pad(content)}│`, 'output-muted')
 }
 function dblBoxTopSuccess() {
   return { type: 'text', text: `  ╔${'═'.repeat(BOX_W)}╗`, className: 'output-success output-border' }
@@ -106,9 +124,8 @@ function dblBoxTopSuccess() {
 function dblBoxBottomSuccess() {
   return { type: 'text', text: `  ╚${'═'.repeat(BOX_W)}╝`, className: 'output-success output-border' }
 }
-function dblBoxRowSuccess(content, pad = ' ') {
-  const inner = content + pad.repeat(Math.max(0, BOX_W - content.length))
-  return { type: 'text', text: `  ║${inner}║`, className: 'output-success output-border' }
+function dblBoxRowSuccess(content, p = ' ') {
+  return { type: 'text', text: `  ║${pad(content)}║`, className: 'output-success output-border' }
 }
 
 // ── Command dispatcher ─────────────────────────────────────────
@@ -169,23 +186,26 @@ function helpCommand() {
     dblBoxRow('          AVAILABLE COMMANDS'),
     dblBoxBottom(),
     blank(),
-    line('  about       → Who is Shaan?', 'output-text'),
-    line('  skills      → Tech stack & expertise', 'output-text'),
-    line('  projects    → Browse portfolio projects', 'output-text'),
-    line('  open <id>   → View project details', 'output-text'),
-    line('  resume      → Open resume / CV', 'output-text'),
-    line('  contact     → Get in touch', 'output-text'),
-    line('  coffee      → ☕ Buy me a coffee', 'output-text'),
-    line('  neofetch    → System information', 'output-text'),
-    line('  matrix      → Toggle matrix rain effect', 'output-text'),
-    line('  newterm     → Open new terminal (Alt+Enter)', 'output-text'),
-    line('  exit        → Close this terminal (Alt+Q)', 'output-text'),
-    line('  clear       → Clear terminal', 'output-text'),
-    line('  sudo <cmd>  → Try your luck...', 'output-muted'),
+    boxRow(' about      → Who is Shaan?'),
+    boxRow(' skills     → Tech stack & expertise'),
+    boxRow(' projects   → Browse portfolio projects'),
+    boxRow(' open <id>  → View project details'),
+    boxRow(' resume     → Open resume / CV'),
+    boxRow(' contact    → Get in touch'),
+    boxRow(' coffee     -> Buy me a coffee'),
+    boxRow(' neofetch   → System information'),
+    boxRow(' matrix     → Toggle matrix rain'),
+    boxRow(' newterm    → New terminal (Alt+Enter)'),
+    boxRow(' exit       → Close terminal (Alt+Q)'),
+    boxRow(' clear      → Clear terminal'),
+    boxRow(' sudo <cmd> → Try your luck...', 'output-muted'),
+    boxBottom(),
     blank(),
     divider('Keybindings'),
-    line('  Alt+Enter → New terminal    Alt+Q → Close', 'output-muted'),
-    line('  Alt+W/A/S/D → Navigate terminals', 'output-muted'),
+    boxRow(' Alt+Enter → New terminal', 'output-muted'),
+    boxRow(' Alt+Q     → Close terminal', 'output-muted'),
+    boxRow(' Alt+W/A/S/D → Navigate', 'output-muted'),
+    boxBottom(),
     blank(),
   ]
 }
@@ -193,18 +213,20 @@ function helpCommand() {
 async function aboutCommand() {
   const content = cachedContent || await fetchContent()
   const a = content.about
+  const chunkW = BOX_W - 6 // account for side padding + emoji widths
+  const taglineLines = a.tagline.match(new RegExp(`.{1,${chunkW}}(\s|$)`, 'g')) || [a.tagline]
   return [
     blank(),
     boxTop('About Me'),
-    blank(),
-    line(`    👋 Hey, I'm ${a.name}`, 'output-heading'),
-    blank(),
-    ...a.tagline.match(/.{1,50}(\s|$)/g).map(s => line(`    ${s.trim()}`, 'output-text')),
-    blank(),
-    line(`    🎓 Education: ${a.education}`, 'output-text'),
-    line(`    📍 Location: ${a.location}`, 'output-text'),
-    line(`    🔭 Focus: ${a.focus}`, 'output-text'),
-    blank(),
+    boxRow(''),
+    boxRow(`  > Hey, I'm ${a.name}`, 'output-heading'),
+    boxRow(''),
+    ...taglineLines.map(s => boxRow(`  ${s.trim()}`)),
+    boxRow(''),
+    boxRow(`  * Education: ${a.education}`),
+    boxRow(`  * Location: ${a.location}`),
+    boxRow(`  * Focus: ${a.focus}`),
+    boxRow(''),
     boxBottom(),
     blank(),
   ]
@@ -215,13 +237,16 @@ async function skillsCommand() {
   const lines = [
     blank(),
     boxTop('Skills & Technologies'),
-    blank(),
+    boxRow(''),
   ]
 
   content.skills.forEach(skill => {
-    lines.push(line(`    ▸ ${skill.category}`, 'output-warning'))
-    lines.push(line(`      ${skill.items}`, 'output-text'))
-    lines.push(blank())
+    lines.push(boxRow(`  ▸ ${skill.category}`, 'output-warning'))
+    // Wrap long skill items to fit in box
+    const maxW = BOX_W - 6
+    const chunks = skill.items.match(new RegExp(`.{1,${maxW}}(\\s|$)`, 'g')) || [skill.items]
+    chunks.forEach(c => lines.push(boxRow(`    ${c.trim()}`)))
+    lines.push(boxRow(''))
   })
 
   lines.push(boxBottom())
@@ -231,26 +256,30 @@ async function skillsCommand() {
 
 async function projectsCommand() {
   const projects = await fetchProjects()
+  const maxDescW = BOX_W - 8
   const lines = [
     blank(),
     boxTop('Projects'),
-    blank(),
+    boxRow(''),
   ]
 
   projects.forEach((p, i) => {
-    lines.push(line(`    [${i + 1}] ${p.title}`, 'output-heading'))
-    lines.push(line(`        ${p.description.slice(0, 80)}${p.description.length > 80 ? '...' : ''}`, 'output-text'))
-    lines.push(line(`        Tech: ${p.technologies.join(', ')}`, 'output-muted'))
-    if (p.github) lines.push({ type: 'link', text: `        GitHub: ${p.github}`, url: p.github, className: 'output-link' })
-    if (p.deployment) lines.push({ type: 'link', text: `        Live: ${p.deployment}`, url: p.deployment, className: 'output-link' })
-    if (p.linkedin) lines.push({ type: 'link', text: `        LinkedIn: ${p.linkedin}`, url: p.linkedin, className: 'output-link' })
-    lines.push(blank())
+    lines.push(boxRow(`  [${i + 1}] ${p.title}`, 'output-heading'))
+    const desc = p.description.length > maxDescW ? p.description.slice(0, maxDescW - 3) + '...' : p.description
+    lines.push(boxRow(`      ${desc}`))
+    const techStr = `Tech: ${p.technologies.join(', ')}`
+    const techChunks = techStr.match(new RegExp(`.{1,${BOX_W - 8}}(\\s|$)`, 'g')) || [techStr]
+    techChunks.forEach(c => lines.push(boxRow(`      ${c.trim()}`, 'output-muted')))
+    if (p.github) lines.push(boxLink(`      GitHub`, p.github))
+    if (p.deployment) lines.push(boxLink(`      Live`, p.deployment))
+    if (p.linkedin) lines.push(boxLink(`      LinkedIn`, p.linkedin))
+    lines.push(boxRow(''))
   })
 
   lines.push(boxBottom())
   lines.push(blank())
   lines.push(roundBoxTop('How to explore'))
-  lines.push(roundBoxRow('  Type  open <number>  to view details'))
+  lines.push(roundBoxRow('  Type  open <number>  to view'))
   lines.push(roundBoxRow('  Example:  open 1'))
   lines.push(roundBoxBottom())
   lines.push(blank())
@@ -265,26 +294,30 @@ async function openCommand(args) {
   const idx = parseInt(args[0]) - 1
   const projects = cachedProjects || await fetchProjects()
   if (idx < 0 || idx >= projects.length) {
-    return [line(`  Project #${args[0]} not found. Run 'projects' to see list.`, 'output-error')]
+    return [line(`  Project #${args[0]} not found.`, 'output-error')]
   }
   const p = projects[idx]
   const label = `══ ${p.title} `
-  const pad = Math.max(0, BOX_W - label.length)
+  const padLen = Math.max(0, BOX_W - label.length)
+  const maxW = BOX_W - 4
+  const descChunks = p.description.match(new RegExp(`.{1,${maxW}}(\s|$)`, 'g')) || [p.description]
+  const techStr = p.technologies.join(' · ')
+  const techChunks = techStr.match(new RegExp(`.{1,${maxW}}(\s|$)`, 'g')) || [techStr]
   const lines = [
     blank(),
-    { type: 'text', text: `  ╔${label}${'═'.repeat(pad)}╗`, className: 'output-accent output-border' },
-    blank(),
-    line(`    ${p.description}`, 'output-text'),
-    blank(),
-    line(`    Technologies:`, 'output-warning'),
-    line(`      ${p.technologies.join(' · ')}`, 'output-text'),
-    blank(),
+    { type: 'text', text: `  ╔${label}${'═'.repeat(padLen)}╗`, className: 'output-accent output-border' },
+    dblBoxRow(''),
+    ...descChunks.map(c => dblBoxRow(`  ${c.trim()}`)),
+    dblBoxRow(''),
+    dblBoxRow('  Technologies:', ' '),
+    ...techChunks.map(c => dblBoxRow(`    ${c.trim()}`)),
+    dblBoxRow(''),
   ]
-  if (p.github) lines.push({ type: 'link', text: `    🔗 GitHub: ${p.github}`, url: p.github, className: 'output-link' })
-  if (p.deployment) lines.push({ type: 'link', text: `    🌐 Live: ${p.deployment}`, url: p.deployment, className: 'output-link' })
-  if (p.linkedin) lines.push({ type: 'link', text: `    💼 LinkedIn: ${p.linkedin}`, url: p.linkedin, className: 'output-link' })
-  lines.push(blank())
-  lines.push({ type: 'text', text: `  ╚${'═'.repeat(label.length + pad)}╝`, className: 'output-accent output-border' })
+  if (p.github) lines.push(dblBoxRow(`  >> GitHub`))
+  if (p.deployment) lines.push(dblBoxRow(`  >> Live`))
+  if (p.linkedin) lines.push(dblBoxRow(`  >> LinkedIn`))
+  if (p.github || p.deployment || p.linkedin) lines.push(dblBoxRow(''))
+  lines.push(dblBoxBottom())
   lines.push(blank())
   return lines
 }
@@ -294,12 +327,12 @@ async function resumeCommand() {
   return [
     blank(),
     boxTop('Resume'),
-    blank(),
-    line('    📄 Resume / CV', 'output-heading'),
-    blank(),
-    { type: 'link', text: '    → Download PDF Resume', url: content.resumeUrl, className: 'output-link' },
-    { type: 'link', text: '    → View on LinkedIn', url: content.resumeLinkedIn, className: 'output-link' },
-    blank(),
+    boxRow(''),
+    boxRow('  > Resume / CV', 'output-heading'),
+    boxRow(''),
+    boxLink('  -> Download PDF Resume', content.resumeUrl),
+    boxLink('  -> View on LinkedIn', content.resumeLinkedIn),
+    boxRow(''),
     boxBottom(),
     blank(),
   ]
@@ -311,13 +344,13 @@ async function contactCommand() {
   return [
     blank(),
     boxTop('Contact'),
-    blank(),
-    line('    📬 Let\'s Connect!', 'output-heading'),
-    blank(),
-    { type: 'link', text: `    📧 Email: ${c.email}`, url: `mailto:${c.email}`, className: 'output-link' },
-    { type: 'link', text: `    🐙 GitHub: ${c.github}`, url: c.github, className: 'output-link' },
-    { type: 'link', text: `    💼 LinkedIn: ${c.linkedin}`, url: c.linkedin, className: 'output-link' },
-    blank(),
+    boxRow(''),
+    boxRow('  > Let\'s Connect!', 'output-heading'),
+    boxRow(''),
+    boxLink(`  @ ${c.email}`, `mailto:${c.email}`),
+    boxLink(`  > GitHub`, c.github),
+    boxLink(`  > LinkedIn`, c.linkedin),
+    boxRow(''),
     boxBottom(),
     blank(),
   ]
@@ -328,18 +361,23 @@ async function coffeeCommand() {
   const url = content.coffeeUrl || 'https://buymeacoffee.com/shaan'
   return [
     blank(),
-    line('         ( (', 'output-warning'),
-    line('          ) )', 'output-warning'),
-    line('       ........', 'output-warning'),
-    line('       |      |]', 'output-warning'),
-    line('       \\      /', 'output-warning'),
-    line('        `----\'', 'output-warning'),
-    blank(),
-    line('  ☕ Enjoying this portfolio? Buy me a coffee!', 'output-text'),
-    blank(),
-    { type: 'link', text: `    → ${url}`, url, className: 'output-link' },
-    blank(),
-    line('  Current status: Caffeinated ✓', 'output-success'),
+    boxTop('Buy Me a Coffee'),
+    boxRow(''),
+    boxRow('         ( (', 'output-warning'),
+    boxRow('          ) )', 'output-warning'),
+    boxRow('       ........', 'output-warning'),
+    boxRow('       |      |]', 'output-warning'),
+    boxRow('       \\      /', 'output-warning'),
+    boxRow('        `----\'', 'output-warning'),
+    boxRow(''),
+    boxRow(' Enjoying this portfolio?', 'output-text'),
+    boxRow(' Buy me a coffee!', 'output-text'),
+    boxRow(''),
+    boxLink(`  -> ${url}`, url),
+    boxRow(''),
+    boxRow(' Status: Caffeinated [ok]', 'output-success'),
+    boxRow(''),
+    boxBottom(),
     blank(),
   ]
 }
@@ -362,7 +400,7 @@ async function sudoCommand(args) {
   const full = args.join(' ').toLowerCase()
   if (!full) {
     return [
-      line('  ⚠️  sudo: missing command', 'output-error'),
+      line('  [!] sudo: missing command', 'output-error'),
       line('  Hint: try "sudo hire shaan", "sudo meme", "sudo music", "sudo hobby"', 'output-muted'),
     ]
   }
@@ -371,13 +409,15 @@ async function sudoCommand(args) {
   const content = cachedContent || await fetchContent()
 
   if (full === 'hire shaan') {
-    const msg = content.hireMessage || 'Shaan has been hired! Starting date: Immediately. Salary: Yes, please 🚀'
+    const msg = content.hireMessage || 'Hired! Start: Now. Salary: Yes please!'
+    const msgW = BOX_W - 6
+    const msgChunks = msg.match(new RegExp(`.{1,${msgW}}(\\s|$)`, 'g')) || [msg]
     return [
       blank(),
       dblBoxTopSuccess(),
-      dblBoxRowSuccess('   ✅ DECISION: EXCELLENT'),
+      dblBoxRowSuccess('   [OK] DECISION: EXCELLENT'),
       dblBoxRowSuccess(''),
-      line(`  ║   ${msg}`, 'output-success'),
+      ...msgChunks.map(c => dblBoxRowSuccess(`   ${c.trim()}`)),
       dblBoxRowSuccess(''),
       dblBoxBottomSuccess(),
       blank(),
@@ -388,10 +428,10 @@ async function sudoCommand(args) {
     const musicUrl = content.musicUrl || 'https://www.youtube.com/watch?v=jfKfPfyJRdk'
     return [
       blank(),
-      line('  🎵 Opening the vibes...', 'output-success'),
+      line('  [~] Opening the vibes...', 'output-success'),
       blank(),
       { type: 'action', action: 'openUrl', url: musicUrl },
-      line('  ♪ Now playing your favourite beats...', 'output-muted'),
+      line('  ~ Now playing your favourite beats...', 'output-muted'),
       blank(),
     ]
   }
@@ -400,9 +440,9 @@ async function sudoCommand(args) {
     const output = [blank()]
     if (content.memeAudioUrl) {
       output.push({ type: 'audio', url: content.memeAudioUrl })
-      output.push(line('  🔊 Playing your favourite meme sound...', 'output-success'))
+      output.push(line('  [>>] Playing your favourite meme sound...', 'output-success'))
     } else {
-      output.push(line('  🤖 "It works on my machine" — Every Developer Ever', 'output-warning'))
+      output.push(line('  [>] "It works on my machine" -- Every Dev Ever', 'output-warning'))
     }
     output.push(blank())
     return output
@@ -413,12 +453,12 @@ async function sudoCommand(args) {
     const output = [
       blank(),
       boxTop('Hobbies & Interests'),
-      blank(),
+      boxRow(''),
     ]
     hobbies.forEach(h => {
-      output.push(line(`    ${h}`, 'output-text'))
+      output.push(boxRow(`  ${h}`))
     })
-    output.push(blank())
+    output.push(boxRow(''))
     output.push(boxBottom())
     output.push(blank())
     return output
@@ -428,19 +468,19 @@ async function sudoCommand(args) {
     const rickrollUrl = content.rickrollUrl || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
     return [
       blank(),
-      line('  ☠️  Initiating system destruction...', 'output-error'),
+      line('  [X] Initiating system destruction...', 'output-error'),
       line('  ██████████████████ 100%', 'output-error'),
       line('  ...', 'output-muted'),
-      line('  Just kidding! 😏', 'output-success'),
+      line('  Just kidding! ;)', 'output-success'),
       blank(),
       { type: 'action', action: 'openUrl', url: rickrollUrl },
-      line('  🎵 You\'ve been rickrolled!', 'output-warning'),
+      line('  [~] You\'ve been rickrolled!', 'output-warning'),
       blank(),
     ]
   }
 
   return [
-    line('  ⚠️  sudo: command not found', 'output-error'),
+    line('  [!] sudo: command not found', 'output-error'),
     line('  Hint: try "sudo hire shaan", "sudo meme", "sudo music", "sudo hobby"', 'output-muted'),
   ]
 }
