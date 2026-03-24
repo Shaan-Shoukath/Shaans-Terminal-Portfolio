@@ -1,17 +1,127 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import useTerminalStore from '../store/terminalStore'
-import { executeCommand } from '../commands/commandParser'
+import { BOX_INNER_PADDING, executeCommand, displayWidth, getBoxContentWidth, getBoxWidth, pad, wrapContentLines } from '../commands/commandParser'
 import Neofetch from './Neofetch'
 
 // Track which action items have already been executed so we don't re-run on re-render
 const executedActions = new Set()
 let actionCounter = 0
 const DEFAULT_TERMINAL_COLUMNS = 48
+const TOP_BORDERS = {
+  '┌': { right: '┐', fill: '─' },
+  '╭': { right: '╮', fill: '─' },
+  '╔': { right: '╗', fill: '═' },
+}
+const BOTTOM_BORDERS = {
+  '└': { right: '┘', fill: '─' },
+  '╰': { right: '╯', fill: '─' },
+  '╚': { right: '╝', fill: '═' },
+}
+const SIDE_BORDERS = {
+  '│': { right: '│' },
+  '║': { right: '║' },
+}
+
+function trimEndSpaces(text) {
+  return text.replace(/\s+$/, '')
+}
+
+function extractBorderTitle(middle, fillChar) {
+  const escapedFill = fillChar === '═' ? '═' : '─'
+  return middle
+    .replace(new RegExp(`[${escapedFill}]+`, 'g'), ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function splitWrapPrefix(content) {
+  const trimmed = trimEndSpaces(content)
+  if (!trimmed) {
+    return { text: '', prefix: '', nextPrefix: '' }
+  }
+
+  const numbered = trimmed.match(/^(\s*\[\d+\]\s+)(.*)$/)
+  if (numbered) {
+    return {
+      prefix: numbered[1],
+      nextPrefix: ' '.repeat(displayWidth(numbered[1])),
+      text: numbered[2],
+    }
+  }
+
+  const commandStyle = trimmed.match(/^(\s*(?:>>|->|[@>*•▸])\s+)(.*)$/)
+  if (commandStyle) {
+    return {
+      prefix: commandStyle[1],
+      nextPrefix: ' '.repeat(displayWidth(commandStyle[1])),
+      text: commandStyle[2],
+    }
+  }
+
+  const spaced = trimmed.match(/^(\s+)(.*)$/)
+  if (spaced) {
+    return {
+      prefix: spaced[1],
+      nextPrefix: spaced[1],
+      text: spaced[2],
+    }
+  }
+
+  return { text: trimmed, prefix: '', nextPrefix: '' }
+}
+
+function getContentClassName(className = '') {
+  if (className.includes('output-link') || className.includes('output-heading')) {
+    return 'output-border-heading'
+  }
+  if (className.includes('output-success')) {
+    return 'output-border-success'
+  }
+  if (className.includes('output-warning')) {
+    return 'output-border-warning'
+  }
+  if (className.includes('output-error')) {
+    return 'output-border-error'
+  }
+  if (className.includes('output-muted')) {
+    return 'output-border-muted'
+  }
+  return 'output-border-text'
+}
+
+function getSideBorderClassName(borderChar, className = '') {
+  if (borderChar === '│') {
+    return 'output-border-side'
+  }
+
+  if (className.includes('output-success')) {
+    return 'output-success output-border-side'
+  }
+
+  return 'output-accent output-border-side'
+}
+
+function getBorderLineClassName(className = '') {
+  if (className.includes('output-success')) {
+    return 'output-border-success'
+  }
+  if (className.includes('output-warning')) {
+    return 'output-border-warning'
+  }
+  if (className.includes('output-error')) {
+    return 'output-border-error'
+  }
+  if (className.includes('output-muted')) {
+    return 'output-border-muted'
+  }
+  return 'output-border-accent'
+}
 
 export default function Terminal({ terminal }) {
   const [input, setInput] = useState('')
   const [terminalColumns, setTerminalColumns] = useState(DEFAULT_TERMINAL_COLUMNS)
+  const [terminalCharWidth, setTerminalCharWidth] = useState(8)
   const inputRef = useRef(null)
   const bodyRef = useRef(null)
   const store = useTerminalStore()
@@ -49,6 +159,7 @@ export default function Terminal({ terminal }) {
       }
 
       const charWidth = context?.measureText('M').width || parseFloat(styles.fontSize) * 0.65
+      setTerminalCharWidth(Math.max(1, charWidth))
       const columns = Math.max(26, Math.floor(availableWidth / charWidth))
       setTerminalColumns(columns)
     }
@@ -102,6 +213,129 @@ export default function Terminal({ terminal }) {
 
   const handleFocus = () => store.setFocused(terminal.id)
   const handleClose = () => store.removeTerminal(terminal.id)
+  const boxWidth = getBoxWidth(terminalColumns)
+
+  const renderResponsiveBorderItem = (item, i) => {
+    const rawText = item.text.startsWith('  ') ? item.text.slice(2) : item.text
+    const firstChar = rawText[0]
+    const lastChar = rawText[rawText.length - 1]
+    const contentWidth = getBoxContentWidth(boxWidth)
+    const horizontalPadding = ' '.repeat(BOX_INNER_PADDING)
+    const borderGridTemplate = `${terminalCharWidth * 2}px ${terminalCharWidth}px ${terminalCharWidth * boxWidth}px ${terminalCharWidth}px`
+
+    if (TOP_BORDERS[firstChar] && TOP_BORDERS[firstChar].right === lastChar) {
+      const { fill } = TOP_BORDERS[firstChar]
+      const title = extractBorderTitle(rawText.slice(1, -1), fill)
+      const label = title ? `${fill.repeat(3)} ${title} ` : ''
+      const borderLineClassName = getBorderLineClassName(item.className)
+      return (
+        <div
+          className="terminal-line output-border-row"
+          key={i}
+          style={{ gridTemplateColumns: borderGridTemplate }}
+        >
+          <span className="output-border-indent">{'  '}</span>
+          <span className={borderLineClassName}>{firstChar}</span>
+          <span className={`${borderLineClassName} output-border-cell`}>
+            {`${label}${fill.repeat(Math.max(0, boxWidth - displayWidth(label)))}`}
+          </span>
+          <span className={borderLineClassName}>{lastChar}</span>
+        </div>
+      )
+    }
+
+    if (BOTTOM_BORDERS[firstChar] && BOTTOM_BORDERS[firstChar].right === lastChar) {
+      const { fill } = BOTTOM_BORDERS[firstChar]
+      const borderLineClassName = getBorderLineClassName(item.className)
+      return (
+        <div
+          className="terminal-line output-border-row"
+          key={i}
+          style={{ gridTemplateColumns: borderGridTemplate }}
+        >
+          <span className="output-border-indent">{'  '}</span>
+          <span className={borderLineClassName}>{firstChar}</span>
+          <span className={`${borderLineClassName} output-border-cell`}>
+            {fill.repeat(boxWidth)}
+          </span>
+          <span className={borderLineClassName}>{lastChar}</span>
+        </div>
+      )
+    }
+
+    if (SIDE_BORDERS[firstChar] && SIDE_BORDERS[firstChar].right === lastChar) {
+      const { prefix, nextPrefix, text } = splitWrapPrefix(rawText.slice(1, -1))
+      const wrappedLines = text
+        ? wrapContentLines(text, contentWidth, prefix, nextPrefix)
+        : ['']
+      const contentClassName = getContentClassName(item.className)
+      const sideBorderClassName = getSideBorderClassName(firstChar, item.className)
+
+      if (item.type === 'link') {
+        return (
+          <React.Fragment key={i}>
+            {wrappedLines.map((wrappedLine, idx) => {
+              return (
+                <div
+                  className="terminal-line output-border-row"
+                  key={`${i}-${idx}`}
+                  style={{ gridTemplateColumns: borderGridTemplate }}
+                >
+                  <span className="output-border-indent">{'  '}</span>
+                  <span className={sideBorderClassName}>{firstChar}</span>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${contentClassName} output-border-cell`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {`${horizontalPadding}${pad(wrappedLine, contentWidth)}${horizontalPadding}`}
+                  </a>
+                  <span className={sideBorderClassName}>{lastChar}</span>
+                </div>
+              )
+            })}
+          </React.Fragment>
+        )
+      }
+
+      return (
+        <React.Fragment key={i}>
+          {wrappedLines.map((wrappedLine, idx) => {
+            return (
+              <div
+                className="terminal-line output-border-row"
+                key={`${i}-${idx}`}
+                style={{ gridTemplateColumns: borderGridTemplate }}
+              >
+                <span className="output-border-indent">{'  '}</span>
+                <span className={sideBorderClassName}>{firstChar}</span>
+                <span className={`${contentClassName} output-border-cell`}>
+                  {`${horizontalPadding}${pad(wrappedLine, contentWidth)}${horizontalPadding}`}
+                </span>
+                <span className={sideBorderClassName}>{lastChar}</span>
+              </div>
+            )
+          })}
+        </React.Fragment>
+      )
+    }
+
+    const fillChar = rawText.includes('═') ? '═' : '─'
+    if (item.className?.includes('output-border') && rawText.startsWith(fillChar.repeat(3))) {
+      const title = extractBorderTitle(rawText, fillChar)
+      const label = title ? `${fillChar.repeat(3)} ${title} ` : ''
+      const lineText = `  ${label}${fillChar.repeat(Math.max(0, boxWidth - displayWidth(label) + 2))}`
+      return (
+        <div className={`terminal-line ${item.className || ''}`} key={i}>
+          {lineText}
+        </div>
+      )
+    }
+
+    return null
+  }
 
   const renderLine = (item, i) => {
     if (!item) return null
@@ -121,6 +355,13 @@ export default function Terminal({ terminal }) {
 
     if (item.type === 'neofetch') {
       return <Neofetch key={i} />
+    }
+
+    if (item.className?.includes('output-border')) {
+      const responsiveBorderItem = renderResponsiveBorderItem(item, i)
+      if (responsiveBorderItem) {
+        return responsiveBorderItem
+      }
     }
 
     if (item.type === 'link') {

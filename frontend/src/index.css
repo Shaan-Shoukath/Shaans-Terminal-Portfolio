@@ -335,6 +335,90 @@ body,
   text-overflow: clip;
   display: block;
   max-width: 100%;
+  font-family: var(--font-mono);
+  font-size: inherit;
+  font-weight: 400;
+  line-height: inherit;
+  letter-spacing: 0;
+  margin-top: 0;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.output-border-side {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: inherit;
+  font-weight: 400;
+  line-height: inherit;
+  letter-spacing: 0;
+  flex: 0 0 auto;
+}
+
+.output-border-row {
+  display: grid;
+  align-items: baseline;
+  white-space: pre;
+  word-break: normal;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.output-border-indent,
+.output-border-cell {
+  font-family: var(--font-mono);
+  font-size: inherit;
+  font-weight: 400;
+  line-height: inherit;
+  letter-spacing: 0;
+  white-space: pre;
+  min-width: 0;
+}
+
+.output-border-text,
+.output-border-accent,
+.output-border-heading,
+.output-border-muted,
+.output-border-success,
+.output-border-warning,
+.output-border-error,
+.output-border-link {
+  font-family: var(--font-mono);
+  font-size: inherit;
+  font-weight: 400;
+  line-height: inherit;
+  letter-spacing: 0;
+  margin-top: 0;
+}
+
+.output-border-text {
+  color: var(--text-secondary);
+}
+
+.output-border-accent {
+  color: var(--accent-purple);
+}
+
+.output-border-heading,
+.output-border-link {
+  color: var(--accent-cyan);
+  text-decoration: none;
+}
+
+.output-border-muted {
+  color: var(--text-muted);
+}
+
+.output-border-success {
+  color: var(--accent-green);
+}
+
+.output-border-warning {
+  color: var(--accent-amber);
+}
+
+.output-border-error {
+  color: var(--accent-rose);
 }
 
 /* Neofetch — always column layout so ASCII art is never width-starved */
